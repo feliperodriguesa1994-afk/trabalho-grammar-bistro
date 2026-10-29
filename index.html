@@ -435,6 +435,24 @@ body.nopt .trad.paid{display:block; color:var(--pink)}   /* tradução comprada 
 .floatpts{position:fixed; z-index:95; font-family:'Playfair Display',Georgia,'Times New Roman',serif; font-weight:700;
   font-size:1.9rem; pointer-events:none; text-shadow:0 2px 8px rgba(255,255,255,.9)}
 footer{text-align:center; padding:12px; font-size:.72rem; color:var(--ink-soft); font-weight:700}
+
+/* ===== FORMATACAO: celular x computador (botao "Screen") ===== */
+/* modo celular forcado: tudo em uma coluna, botoes grandes */
+body.layPhone .stage{grid-template-columns:1fr; align-items:stretch}
+body.layPhone .bubble::before{display:none}
+body.layPhone .bellrow{grid-template-columns:1fr}
+body.layPhone .levelrow{grid-template-columns:1fr}
+body.layPhone #liveChart{display:none}
+body.layPhone .guest svg{width:clamp(110px,42vw,200px)}
+body.layPhone .hud{flex-wrap:wrap; justify-content:center}
+body.layPhone .bell{padding:20px 12px}
+body.layPhone .ans{padding:16px 12px}
+/* modo computador forcado: mantem as duas colunas mesmo em tela estreita */
+body.layPc .stage{grid-template-columns:minmax(190px,.75fr) 2fr; align-items:end}
+body.layPc .bubble::before{display:block}
+body.layPc .bellrow{grid-template-columns:1fr 1fr}
+body.layPc .levelrow{grid-template-columns:repeat(3,1fr)}
+body.layPc #liveChart{display:block}
 </style>
 </head>
 <body>
@@ -454,6 +472,7 @@ footer{text-align:center; padding:12px; font-size:.72rem; color:var(--ink-soft);
     <div class="pill" id="pillMatch">–</div>
     <div class="pill">Order <b id="hudRound">–</b></div>
     <button class="btn-plain" id="btnZoom" title="Bigger text for the projector">Text 100%</button>
+    <button class="btn-plain" id="btnScreen" title="Layout: auto, phone or computer / Formatacao para celular ou computador">Screen: auto</button>
     <button class="btn-plain off" id="btnPt" title="Mostrar ou esconder a tradução em português">PT help: off</button>
     <button class="btn-plain" id="btnVoice" title="The game reads the orders in English">Voice on</button>
     <button class="btn-plain" id="btnEnd" title="Finish now and show the result">Finish now</button>
@@ -712,6 +731,32 @@ $('btnZoom').onclick=function(){
   document.documentElement.style.fontSize=(16*f)+'px';          /* reforço */
   this.textContent='Text '+ZOOMS[zi]+'%';
   tone(700+zi*80,.06,'triangle',.08,0);
+};
+
+/* ===================== FORMATAÇÃO: celular x computador ===================== */
+/* auto = o jogo se ajusta sozinho ao tamanho da tela (como antes)
+   phone = força o layout de celular (uma coluna, botões grandes)
+   pc    = força o layout de computador/projetor, mesmo num celular  */
+var SCREENS=['auto','phone','pc'], SCREEN_LABEL={auto:'Screen: auto',phone:'Screen: phone',pc:'Screen: computer'}, si=0;
+function applyScreen(){
+  var m=SCREENS[si];
+  document.body.classList.toggle('layPhone',m==='phone');
+  document.body.classList.toggle('layPc',m==='pc');
+  var vp=document.querySelector('meta[name="viewport"]');
+  if(vp) vp.setAttribute('content', m==='pc' ? 'width=1280' : 'width=device-width, initial-scale=1.0');
+  var b=$('btnScreen'); if(b) b.textContent=SCREEN_LABEL[m];
+  try{ localStorage.setItem('gb-screen',m); }catch(e){}
+  if(typeof renderLive==='function'){ try{ renderLive(); }catch(e){} }
+}
+try{
+  var saved=localStorage.getItem('gb-screen');
+  if(saved && SCREENS.indexOf(saved)>=0) si=SCREENS.indexOf(saved);
+}catch(e){}
+applyScreen();
+$('btnScreen').onclick=function(){
+  si=(si+1)%SCREENS.length;
+  applyScreen();
+  tone(620+si*90,.06,'triangle',.08,0);
 };
 
 /* ===================== CONFETE (próprio, funciona sem internet) ===================== */
